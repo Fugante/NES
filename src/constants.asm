@@ -1,0 +1,2 @@
+NUM_ENEMIES     := 5
+NUM_BULLETS     := 3

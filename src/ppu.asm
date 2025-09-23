@@ -3,22 +3,21 @@
 .importzp tmp1
 .importzp tmp2
 .importzp addr1
+.importzp ppu_scroll_y
+.importzp current_ppu_ctrl
 
 .code
 ; Loads a palette
-;   addr1: address (high byte) of the palette (located in palettes.asm)
+;   addr1: pointer to the palette byte array
 .proc load_palettes
-    LDY #$00
     BIT PPUSTATUS           ; reset the address latch to ensure next byte is "high"
-    LDA (addr1),Y           ; high byte of the PPU palettes starting address
-    INY
+    LDA #$3f                ; high byte of the PPU palettes starting address
     STA PPUADDR
-    LDA (addr1),Y           ; low byte of the same address
+    LDA #$00                ; low byte of the same address
     STA PPUADDR
 
-    INY
-    LDA (addr1),Y           ; get the number of values to load
-    TAX
+    LDX #$20                ; load 4 colours * 8 palettes = 32 bytes
+    LDY #$ff
 @load:
     INY
     LDA (addr1),Y
@@ -29,15 +28,16 @@
     RTS
 .endproc
 
-.export load_palettes
-
 ; Loads a tile to a nametable
-;   addr1: address (high byte) of the tile (located in nametables.asm)
+;   addr1: pointer to the nametable struct
 ;   tmp1: high byte of the nametable to load to
-;   tmp2: low byte (name) of the tile
-.proc load_tile
+.proc load_nametable
     LDY #$00
-    LDA (addr1),Y               ; load data length
+    LDA (addr1),Y               ; load tile number (name)
+@params:
+    STA tmp2
+    INY
+    LDA (addr1),Y               ; load array length
     TAX
 @load:
     INY
@@ -55,7 +55,50 @@
     DEX
     BNE @load                   ; if (X != 0) { @load }
 
+    INY
+    LDA (addr1),Y
+    BEQ @done                   ; if (addr1 + Y == 0) { @done } ($00 marks the end)
+    JMP @params
+
+@done:
     RTS
 .endproc
 
-.export load_tile
+; loads an attribute table
+;   tmp1: high byte of the address where the attribute table starts
+;   addr1: pointer the array of 64 byte data
+.proc load_attr_table
+    LDY #$00
+    LDX #$c0            ; low byte of the start address of any attribute table
+@load:
+    BIT PPUSTATUS
+    LDA tmp1
+    STA PPUADDR
+    STX PPUADDR
+    LDA (addr1),Y
+    STA PPUDATA
+    INY
+    INX
+    BNE @load           ; if (X != 0) { @load } (will be 0 after 64 loops)
+
+    RTS
+.endproc
+
+.proc update_scroll
+    LDA ppu_scroll_y
+    BNE @update             ; if (ppu_scroll_y != 0) { @update }
+    LDA current_ppu_ctrl    ; false: change base nametable
+    EOR #%00000010          ; flip bit 1 to its oposite
+    STA current_ppu_ctrl
+    LDA #240                ; reset scroll to 240
+    STA ppu_scroll_y
+@update:
+    DEC ppu_scroll_y
+
+    RTS
+.endproc
+
+.export load_palettes
+.export load_nametable
+.export load_attr_table
+.export update_scroll

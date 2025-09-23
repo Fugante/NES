@@ -1,30 +1,17 @@
 .include "io.asm"
 
-.importzp tmp1
-.importzp tmp2
-.importzp addr1
-.importzp player_x
-.importzp player_y
-.importzp player_sprite_attrs
 .importzp game_state
-.importzp sleep_counter
-.importzp ppu_scroll_x
 .importzp ppu_scroll_y
 .importzp current_ppu_ctrl
-.importzp current_ppu_mask
-.importzp joy1
 
+.import boot
 .import nmi
 .import reset
-.import load_palettes
-.import load_tile
 .import draw_player
 .import poll_controller
 .import move_player
 .import check_limits
-
-.import palettes
-.import big_star
+.import update_scroll
 
 .segment "HEADER"
     .byte 'N', 'E', 'S', $1a        ; the word "NES" plus newline character
@@ -38,61 +25,7 @@
 
 .code
 .proc main
-init_ram:
-    ; initialize zero-page values
-    LDA #$00                ; set scroll values to 0
-    STA ppu_scroll_x
-    LDA #240
-    STA ppu_scroll_y
-    LDA #%10010000          ; turn on NMIs, sprites use first pattern table
-    STA current_ppu_ctrl
-    LDA #%00011110          ; turn on screen
-    STA current_ppu_mask
-
-    ; load palettes
-    LDA #<palettes
-    STA addr1
-    LDA #>palettes
-    STA addr1 + 1
-    JSR load_palettes
-
-    ; load nametables
-    LDA #<big_star
-    STA addr1
-    LDA #>big_star
-    STA addr1 + 1
-    LDA #$20            ; high byte of nametable 0
-    STA tmp1
-    LDA #$2f            ; load byte (name) of the big star tile
-    STA tmp2
-    JSR load_tile
-    LDA #$28            ; high byte of nametable 3
-    STA tmp1
-    LDA #$2f            ; load byte (name) of the big star tile
-    STA tmp2
-    JSR load_tile
-
-    LDA #$80                ; middle of the x axis
-    STA player_x
-    LDA #$a0                ; middle of the y axis
-    STA player_y
-    LDA #$00                ; use palette 0
-    STA player_sprite_attrs
-
-    ; TODO move all this section to a subroutine
-
-vblank_wait:
-    BIT PPUSTATUS
-    BPL vblank_wait
-
-    LDA current_ppu_ctrl
-    STA PPUCTRL
-    LDA current_ppu_mask
-    STA PPUMASK
-    LDA ppu_scroll_x
-    STA PPUSCROLL
-    LDA ppu_scroll_y
-    STA PPUSCROLL
+    JSR boot
 
 main_loop:
     JSR poll_controller
@@ -100,17 +33,7 @@ main_loop:
     JSR check_limits
     JSR draw_player
 
-    ; update scroll
-    LDA ppu_scroll_y
-    BNE @update_scroll      ; if (ppu_scroll_y != 0) { @update_scroll }
-    LDA current_ppu_ctrl    ; false: change base nametable
-    EOR #%00000010          ; flip bit 1 to its oposite
-    STA current_ppu_ctrl
-    LDA #240                ; reset scroll to 240
-    STA ppu_scroll_y
-@update_scroll:
-    DEC ppu_scroll_y
-    ; TODO move all this section to a subroutine
+    JSR update_scroll
 
     LDA game_state
     ORA #%10000000          ; set sleep flag
