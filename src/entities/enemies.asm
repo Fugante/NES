@@ -2,7 +2,7 @@
 .include "../io.asm"
 
 .importzp tmp1
-.importzp enemies
+.importzp seed
 .importzp enemy_timer
 .importzp enemy_flags
 .importzp enemy_x_vels
@@ -13,6 +13,7 @@
 .importzp enemy_sprite_attrs
 
 .import multiply
+.import galois16o
 
 .import enemy_sprites
 
@@ -23,12 +24,11 @@
     INY
     TYA
     CMP #NUM_ENEMIES
-    BEQ @done           ; if (Y == NUM_ENEMIES) { @done }
+    BEQ @done               ; if (Y == NUM_ENEMIES) { @done }
 
     LDA enemy_flags,Y
-    BPL @spawn          ; if (enemy_flags >= 0) { @spawn } enemy is inactive
+    BPL @spawn              ; if (enemy_flags >= ) { @spawn }
 
-@update:
     JSR move_enemy
     JSR check_enemy_limits
     JSR draw_enemy
@@ -36,10 +36,10 @@
 
 @spawn:
     LDA enemy_timer
-    BNE @start          ; if (enemy_timer != 0) { @start }
+    BNE @start              ; if (enmey_timer != 0) { @start }
 
     JSR spawn_enemy
-    JMP @update
+    JMP @start
 
 @done:
     RTS
@@ -49,6 +49,7 @@
 ; -- Vars --
 ;   Y: enemy number (0 - NUM_ENEMIES)
 .proc spawn_enemy
+    STY tmp1
     LDA enemy_flags,Y
     ORA #%10000000      ; set "active" flag
     STA enemy_flags,Y
@@ -56,11 +57,13 @@
     STA enemy_x_vels,Y
     LDA #$01
     STA enemy_y_vels,Y
-    LDA #$50
+    JSR galois16o       ; generate a random number 0 - 255
+    LDY tmp1
     STA enemy_x_pos,Y
-    LDA #$10
+    LDA #OFFSET_1x1
     STA enemy_y_pos,Y
-    LDA #$10            ; reset enemy timer
+    JSR galois16o       ; reset enemy timer
+    LDY tmp1
     STA enemy_timer
 
     RTS

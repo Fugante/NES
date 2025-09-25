@@ -15,7 +15,6 @@
     STA PPUADDR
     LDA #$00                ; low byte of the same address
     STA PPUADDR
-
     LDX #$20                ; load 4 colours * 8 palettes = 32 bytes
     LDY #$ff
 @load:
@@ -59,7 +58,6 @@
     LDA (addr1),Y
     BEQ @done                   ; if (addr1 + Y == 0) { @done } ($00 marks the end)
     JMP @params
-
 @done:
     RTS
 .endproc

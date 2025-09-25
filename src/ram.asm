@@ -5,39 +5,41 @@
 tmp1: .res 1                        ; $0000
 tmp2: .res 1                        ; $0001
 addr1: .res 2                       ; $0002 - $0003
-player_x: .res 1                    ; $0004
-player_y: .res 1                    ; $0005
-player_sprite_attrs: .res 1         ; $0006
-ppu_scroll_y: .res 1                ; $0007
-ppu_scroll_x: .res 1                ; $0008
-current_ppu_ctrl: .res 1            ; $0009
-current_ppu_mask: .res 1            ; $000a
+seed: .res 2                        ; $0004 - $0005
+player_x: .res 1                    ; $0006
+player_y: .res 1                    ; $0007
+player_sprite_attrs: .res 1         ; $0008
+ppu_scroll_y: .res 1                ; $0009
+ppu_scroll_x: .res 1                ; $000a
+current_ppu_ctrl: .res 1            ; $000b
+current_ppu_mask: .res 1            ; $000c
 ; s p - - - - - -
 ; | +------------------------------ 0 normal, 1 paused
 ; +-------------------------------  0 working, 1 sleeping
-game_state: .res 1                  ; $000b
-joy1: .res 1                        ; $000c
-joy2: .res 1                        ; $000d
+game_state: .res 1                  ; $000d
+joy1: .res 1                        ; $000e
+joy2: .res 1                        ; $000f
 ; enemy object pool
-enemy_x_pos: .res NUM_ENEMIES       ; $000e - $0012
-enemy_y_pos: .res NUM_ENEMIES       ; $0013 - $0018
-enemy_x_vels: .res NUM_ENEMIES      ; $0019 - $001d
-enemy_y_vels: .res NUM_ENEMIES      ; $001e - $0022
-enemy_flags: .res NUM_ENEMIES       ; $0023 - $0028
+enemy_x_pos: .res NUM_ENEMIES       ; $0010 - $0014
+enemy_y_pos: .res NUM_ENEMIES       ; $0015 - $001a
+enemy_x_vels: .res NUM_ENEMIES      ; $001b - $001f
+enemy_y_vels: .res NUM_ENEMIES      ; $0020 - $0024
+enemy_flags: .res NUM_ENEMIES       ; $0025 - $002a
 ; a _ _ _ _ t t t
 ; |         +-+-+------------------- enemy type (8 posible enemies)
 ; +---------------------------------  0 inactive, 1 active
-current_enemy: .res 1               ; $0029
-current_enemy_type: .res 1          ; $002a
-enemy_timer: .res 1                 ; $002b
-enemy_sprite_attrs: .res 1          ; $002c
+current_enemy: .res 1               ; $002b
+current_enemy_type: .res 1          ; $002c
+enemy_timer: .res 1                 ; $002d
+enemy_sprite_attrs: .res 1          ; $002e
 ; player bullet pool
-bullet_xs: .res NUM_BULLETS         ; $002d - $002f
-bullet_ys: .res NUM_BULLETS         ; $0030 - $0032
+bullet_xs: .res NUM_BULLETS         ; $002f - $0030
+bullet_ys: .res NUM_BULLETS         ; $0031 - $0033
 
 .exportzp tmp1
 .exportzp tmp2
 .exportzp addr1
+.exportzp seed
 .exportzp player_x
 .exportzp player_y
 .exportzp player_sprite_attrs

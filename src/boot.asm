@@ -1,12 +1,12 @@
 .include "io.asm"
 
+.importzp tmp1
+.importzp addr1
+.importzp seed
 .importzp ppu_scroll_x
 .importzp ppu_scroll_y
 .importzp current_ppu_ctrl
 .importzp current_ppu_mask
-.importzp addr1
-.importzp tmp1
-.importzp tmp2
 .importzp player_x
 .importzp player_y
 .importzp player_sprite_attrs
@@ -24,6 +24,10 @@
 .code
 .proc boot
     ; initialize zero-page values
+    LDA #$2a
+    STA seed + 1
+    LDA #$5E
+    STA seed
     LDA #$00                ; set scroll values to 0
     STA ppu_scroll_x
     LDA #240
