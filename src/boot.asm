@@ -10,6 +10,8 @@
 .importzp player_x
 .importzp player_y
 .importzp player_sprite_attrs
+.importzp enemy_sprite_attrs
+.importzp enemy_timer
 
 .import load_palettes
 .import load_nametable
@@ -30,6 +32,15 @@
     STA current_ppu_ctrl
     LDA #%00011110          ; turn on screen
     STA current_ppu_mask
+    LDA #$80                ; middle of the x axis
+    STA player_x
+    LDA #$a0                ; middle of the y axis
+    STA player_y
+    LDA #$00                ; use palette 0
+    STA player_sprite_attrs
+    STA enemy_sprite_attrs
+    LDA #$01
+    STA enemy_timer
 
     ; load palettes
     LDA #<palette_1
@@ -56,17 +67,11 @@
     STA tmp1
     JSR load_attr_table
 
-    LDA #$80                ; middle of the x axis
-    STA player_x
-    LDA #$a0                ; middle of the y axis
-    STA player_y
-    LDA #$00                ; use palette 0
-    STA player_sprite_attrs
-
 @vblank_wait:
     BIT PPUSTATUS
     BPL @vblank_wait
 
+    ; enable graphics
     LDA current_ppu_ctrl
     STA PPUCTRL
     LDA current_ppu_mask

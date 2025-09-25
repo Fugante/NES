@@ -24,12 +24,16 @@ enemy_y_pos: .res NUM_ENEMIES       ; $0013 - $0018
 enemy_x_vels: .res NUM_ENEMIES      ; $0019 - $001d
 enemy_y_vels: .res NUM_ENEMIES      ; $001e - $0022
 enemy_flags: .res NUM_ENEMIES       ; $0023 - $0028
+; a _ _ _ _ t t t
+; |         +-+-+------------------- enemy type (8 posible enemies)
+; +---------------------------------  0 inactive, 1 active
 current_enemy: .res 1               ; $0029
 current_enemy_type: .res 1          ; $002a
 enemy_timer: .res 1                 ; $002b
+enemy_sprite_attrs: .res 1          ; $002c
 ; player bullet pool
-bullet_xs: .res NUM_BULLETS         ; $002c - $002e
-bullet_ys: .res NUM_BULLETS         ; $002f - $0031
+bullet_xs: .res NUM_BULLETS         ; $002d - $002f
+bullet_ys: .res NUM_BULLETS         ; $0030 - $0032
 
 .exportzp tmp1
 .exportzp tmp2
@@ -52,5 +56,6 @@ bullet_ys: .res NUM_BULLETS         ; $002f - $0031
 .exportzp current_enemy
 .exportzp current_enemy_type
 .exportzp enemy_timer
+.exportzp enemy_sprite_attrs
 .exportzp bullet_xs
 .exportzp bullet_ys

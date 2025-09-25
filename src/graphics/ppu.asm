@@ -1,4 +1,4 @@
-.include "io.asm"
+.include "../io.asm"
 
 .importzp tmp1
 .importzp tmp2

@@ -1,3 +1,4 @@
+; cpu registers
 PPUCTRL     := $2000
 PPUMASK     := $2001
 PPUSTATUS   := $2002
@@ -20,3 +21,7 @@ BTN_START   := %00010000
 BTN_SELECT  := %00100000
 BTN_B       := %01000000
 BTN_A       := %10000000
+
+; screen and coordinates
+SCREEN_HEIGHT   := 240
+SCREEN_WIDTH    := 256

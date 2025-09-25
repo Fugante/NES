@@ -1,4 +1,4 @@
-.include "io.asm"
+.include "../io.asm"
 
 .importzp joy1
 

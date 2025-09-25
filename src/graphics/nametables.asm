@@ -1,4 +1,4 @@
-.include "constants.asm"
+.include "../constants.asm"
 
 .rodata
 ; tile number (name)

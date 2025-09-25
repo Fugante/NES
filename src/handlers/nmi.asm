@@ -1,4 +1,4 @@
-.include "io.asm"
+.include "../io.asm"
 
 .importzp current_ppu_ctrl
 .importzp current_ppu_mask

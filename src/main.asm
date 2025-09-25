@@ -12,6 +12,7 @@
 .import move_player
 .import check_limits
 .import update_scroll
+.import process_enemies
 
 .segment "HEADER"
     .byte 'N', 'E', 'S', $1a        ; the word "NES" plus newline character
@@ -27,14 +28,17 @@
 .proc main
     JSR boot
 
-main_loop:
+@main_loop:
+    ; update player
     JSR poll_controller
     JSR move_player
     JSR check_limits
     JSR draw_player
-
+    ;update enemies
+    JSR process_enemies
+    ; update background
     JSR update_scroll
-
+    ; update game state
     LDA game_state
     ORA #%10000000          ; set sleep flag
     STA game_state
@@ -43,8 +47,9 @@ main_loop:
     AND #%10000000          ; filter out sleep flag
     BNE @sleep              ; if (sleep flag != 0) { @sleep }
 
-    JMP main_loop           ; return to the main loop
+    JMP @main_loop           ; return to the main loop
 .endproc
+
 .export main
 
 irq:
@@ -55,4 +60,4 @@ irq:
     .addr irq
 
 .segment "CHR"
-.incbin "graphics.chr"
+.incbin "sprites.chr"
