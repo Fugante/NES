@@ -1,6 +1,9 @@
 .include "../constants.asm"
 .include "../io.asm"
 
+.importzp tmpA
+.importzp tmpX
+.importzp tmpY
 .importzp tmp1
 .importzp seed
 .importzp enemy_timer
@@ -14,6 +17,7 @@
 
 .import multiply
 .import galois16o
+.import random_int
 
 .import enemy_sprites
 
@@ -22,12 +26,11 @@
     LDY #$ff
 @start:
     INY
-    TYA
-    CMP #NUM_ENEMIES
+    CPY #NUM_ENEMIES
     BEQ @done               ; if (Y == NUM_ENEMIES) { @done }
 
     LDA enemy_flags,Y
-    BPL @spawn              ; if (enemy_flags >= ) { @spawn }
+    BPL @spawn              ; if (enemy_flags >= 0) { @spawn }
 
     JSR move_enemy
     JSR check_enemy_limits
@@ -49,7 +52,7 @@
 ; -- Vars --
 ;   Y: enemy number (0 - NUM_ENEMIES)
 .proc spawn_enemy
-    STY tmp1
+    STY tmpY
     LDA enemy_flags,Y
     ORA #%10000000      ; set "active" flag
     STA enemy_flags,Y
@@ -57,13 +60,15 @@
     STA enemy_x_vels,Y
     LDA #$01
     STA enemy_y_vels,Y
-    JSR galois16o       ; generate a random number 0 - 255
-    LDY tmp1
+    LDA #$80
+    STA tmp1
+    JSR random_int      ; generate a random number 0 - 255
+    LDY tmpY
     STA enemy_x_pos,Y
     LDA #OFFSET_1x1
     STA enemy_y_pos,Y
     JSR galois16o       ; reset enemy timer
-    LDY tmp1
+    LDY tmpY
     STA enemy_timer
 
     RTS

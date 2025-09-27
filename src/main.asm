@@ -8,10 +8,10 @@
 .import nmi
 .import reset
 .import draw_player
-.import poll_controller
+.import update_controller
+.import update_scroll
 .import move_player
 .import check_limits
-.import update_scroll
 .import process_enemies
 
 .segment "HEADER"
@@ -30,7 +30,7 @@
 
 @main_loop:
     ; update player
-    JSR poll_controller
+    JSR update_controller
     JSR move_player
     JSR check_limits
     JSR draw_player
