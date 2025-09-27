@@ -16,6 +16,24 @@
         player_y = SCREEN_HEIGHT - 10
     .endscope
 
+    .proc init
+        jsr init_x
+        jsr init_y
+        jsr init_sprites
+    .endproc
+
+    .proc init_x
+        lda #Initial::player_x
+        sta player_x
+        rts
+    .endproc
+
+    .proc init_y
+        lda #Initial::player_y
+        sta player_y
+        rts
+    .endproc
+
     .proc draw
         ; top left tile (x - OFFSET_2x2, y - OFFSET_2x2)
         ldx #$00
