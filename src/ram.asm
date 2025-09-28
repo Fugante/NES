@@ -20,10 +20,10 @@ current_ppu_mask: .res 1            ; $000f
 ; | +------------------------------ 0 normal, 1 paused
 ; +-------------------------------- 0 working, 1 sleeping
 game_state: .res 1                  ; $0010
-joy1_down: .res 1                   ; $0011
-joy2_down: .res 1                   ; $0012
-joy1_sus: .res 1                    ; $0013
-joy2_sus: .res 1                    ; $0014
+joy1_press: .res 1                  ; $0011
+joy2_press: .res 1                  ; $0012
+joy1_down: .res 1                   ; $0013
+joy2_down: .res 1                   ; $0014
 ; enemy object pool
 enemy_x_pos: .res NUM_ENEMIES       ; $0015 - $0019
 enemy_y_pos: .res NUM_ENEMIES       ; $001a - $001e
@@ -56,10 +56,10 @@ bullet_ys: .res NUM_BULLETS         ; $0035 - $0037
 .exportzp current_ppu_ctrl
 .exportzp current_ppu_mask
 .exportzp game_state
+.exportzp joy1_press
+.exportzp joy2_press
 .exportzp joy1_down
 .exportzp joy2_down
-.exportzp joy1_sus
-.exportzp joy2_sus
 .exportzp enemy_x_pos
 .exportzp enemy_y_pos
 .exportzp enemy_x_vels

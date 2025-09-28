@@ -9,48 +9,48 @@
 .code
 .proc nmi
     ; save registers
-    PHP
-    PHA
-    TXA
-    PHA
-    TYA
-    PHA
+    php
+    pha
+    txa
+    pha
+    tya
+    pha
 
     ; DMA transfer: copy sprite data to OAM
-    LDA #$00
-    STA OAMADDR
-    LDA #$02        ; High byte of address where the OAM buffer starts
-    STA OAMDMA
+    lda #$00
+    sta OAMADDR
+    lda #$02        ; High byte of address where the OAM buffer starts
+    sta OAMDMA
 
     ; set PPUCTRL
-    LDA current_ppu_ctrl
-    STA PPUCTRL
+    lda current_ppu_ctrl
+    sta PPUCTRL
 
     ; set PPUMASK
-    LDA current_ppu_mask
-    STA PPUMASK
+    lda current_ppu_mask
+    sta PPUMASK
 
     ; set_scroll_positions:
-    BIT PPUSTATUS
-    LDA ppu_scroll_x
-    STA PPUSCROLL
-    LDA ppu_scroll_y
-    STA PPUSCROLL
+    bit PPUSTATUS
+    lda ppu_scroll_x
+    sta PPUSCROLL
+    lda ppu_scroll_y
+    sta PPUSCROLL
 
     ; revert sleeping flag to zero (working)
-    LDA game_state
-    AND #%01111111
-    STA game_state
+    lda game_state
+    and #%01111111
+    sta game_state
 
     ; restore registers
-    PLA
-    TAY
-    PLA
-    TAX
-    PLA
-    PLP
+    pla
+    tay
+    pla
+    tax
+    pla
+    plp
 
-    RTI
+    rti
 .endproc
 
 .export nmi

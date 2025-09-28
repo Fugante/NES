@@ -1,3 +1,4 @@
+.include "constants.asm"
 .include "io.asm"
 
 .importzp game_state
@@ -7,11 +8,10 @@
 .import boot
 .import nmi
 .import reset
-.import draw_player
+.import pause
+.import update_player
 .import update_controller
 .import update_scroll
-.import move_player
-.import check_limits
 .import process_enemies
 
 .segment "HEADER"
@@ -26,28 +26,31 @@
 
 .code
 .proc main
-    JSR boot
+    jsr boot
 
 @main_loop:
     ; update player
-    JSR update_controller
-    JSR move_player
-    JSR check_limits
-    JSR draw_player
-    ;update enemies
-    JSR process_enemies
-    ; update background
-    JSR update_scroll
-    ; update game state
-    LDA game_state
-    ORA #%10000000          ; set sleep flag
-    STA game_state
-@sleep:
-    LDA game_state
-    AND #%10000000          ; filter out sleep flag
-    BNE @sleep              ; if (sleep flag != 0) { @sleep }
+    jsr update_controller
+    jsr pause
+    lda game_state
+    and #PAUSE_FLAG
+    bne @sleep              ; if (pause flag != 0) { @sleep }
 
-    JMP @main_loop           ; return to the main loop
+    jsr update_player
+    ;update enemies
+    jsr process_enemies
+    ; update background
+    jsr update_scroll
+    ; update game state
+    lda game_state
+    ora #%10000000          ; set sleep flag
+    sta game_state
+@sleep:
+    lda game_state
+    and #%10000000          ; filter out sleep flag
+    bne @sleep              ; if (sleep flag != 0) { @sleep }
+
+    jmp @main_loop           ; return to the main loop
 .endproc
 
 .export main
