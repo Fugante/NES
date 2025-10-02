@@ -3,6 +3,8 @@
 
 .importzp tmp1
 .importzp tmp2
+.importzp addr1
+.importzp addr2
 .importzp player_x
 .importzp player_y
 .importzp target_velocity_x
@@ -21,7 +23,8 @@
     .scope Initial
         player_x0 = %00001000
         player_x1 = %00000000
-        player_y = SCREEN_HEIGHT - 16
+        player_y0 = %00001110
+        player_y1 = %00000000
         player_sprite_attrs = $00
     .endscope
 
@@ -32,17 +35,6 @@
         negative:
             .byte %11110000, %11000000  ; 2's complement of positive velocities
     .endscope
-
-    .enum Heading
-        Right = 0
-        Left = 1
-    .endenum
-
-    .enum MotionState
-        Still = 0
-        Move = 1
-        Pivot = 3
-    .endenum
 
     .proc init_player
         jsr init_x
@@ -60,8 +52,10 @@
     .endproc
 
     .proc init_y
-        lda #Initial::player_y
+        lda #Initial::player_y0
         sta player_y
+        lda #Initial::player_y1
+        sta player_y + 1
     @done:
         rts
     .endproc
@@ -75,80 +69,180 @@
 
     .scope Movement
         .proc update
-            jsr set_target_velocity_x
+            jsr set_target_velocities
             jsr accelerate
             jsr move
-            jsr bound_position_x
+            jsr bound_position
         @done:
             rts
         .endproc
 
-        .proc set_target_velocity_x
-            ldx #$00
-            lda #BTN_B
-            and joy1_down
-            beq @check_right
-            inx
-        @check_right:
+        .proc set_target_velocities
+        @x_axis:
             lda #BTN_RIGHT
-            and joy1_down
-            beq @check_left
-            lda Velocities::positive, x
-            sta target_velocity_x
-            jmp @done
-        @check_left:
+            sta tmp1
             lda #BTN_LEFT
-            and joy1_down
-            beq @no_direction
-            lda Velocities::negative, x
-            sta target_velocity_x
-            jmp @done
-        @no_direction:
-            lda #$00
-            sta target_velocity_x
+            sta tmp2
+            lda #<target_velocity_x
+            sta addr1
+            lda #>target_velocity_x
+            sta addr1 + 1
+            jsr set_target_velocity
+        @y_axis:
+            lda #BTN_DOWN
+            sta tmp1
+            lda #BTN_UP
+            sta tmp2
+            lda #<target_velocity_y
+            sta addr1
+            lda #>target_velocity_y
+            sta addr1 + 1
+            jsr set_target_velocity
         @done:
             rts
         .endproc
 
         .proc accelerate
-            lda player_velocity_x
-            sec
-            sbc target_velocity_x
-            bne @check_greater
-            jmp @done
-        @check_greater:
-            bmi @lesser
-            dec player_velocity_x
-            jmp @done
-        @lesser:
-            inc player_velocity_x
+        @x_axis:
+            lda #<player_velocity_x
+            sta addr1
+            lda #>player_velocity_x
+            sta addr1 + 1
+            lda target_velocity_x
+            sta tmp1
+            jsr update_velocity
+        @y_axis:
+            lda #<player_velocity_y
+            sta addr1
+            lda #>player_velocity_y
+            sta addr1 + 1
+            lda target_velocity_y
+            sta tmp1
+            jsr update_velocity
         @done:
             rts
         .endproc
 
         .proc move
+        @x_axis:
             lda player_velocity_x
+            sta tmp1
+            lda #<player_x
+            sta addr1
+            lda #>player_x
+            sta addr1 + 1
+            jsr update_position
+        @y_axis:
+            lda player_velocity_y
+            sta tmp1
+            lda #<player_y
+            sta addr1
+            lda #>player_y
+            sta addr1 + 1
+            jsr update_position
+        @done:
+            rts
+        .endproc
+
+        .proc bound_position
+        @x_axis:
+            lda #<player_x
+            sta addr1
+            lda #>player_x
+            sta addr1 + 1
+            lda #<player_sprite_x
+            sta addr2
+            lda #>player_sprite_x
+            sta addr2 + 1
+            jsr set_screen_position
+        @y_axis:
+            lda #<player_y
+            sta addr1
+            lda #>player_y
+            sta addr1 + 1
+            lda #<player_sprite_y
+            sta addr2
+            lda #>player_sprite_y
+            sta addr2 + 1
+            jsr set_screen_position
+        @done:
+            rts
+        .endproc
+
+        .proc set_target_velocity
+            ldy #$00
+            ldx #$00
+            lda #BTN_B
+            and joy1_down
+            beq @check_positive             ; if (button B is pressed) { x++ }
+            inx
+        @check_positive:
+            lda tmp1                        ; positive direction button mask
+            and joy1_down
+            beq @check_negative
+            lda Velocities::positive, x
+            sta (addr1), y                  ; pointer to the velocity variable
+            jmp @done
+        @check_negative:
+            lda tmp2                        ; negative direction button mask
+            and joy1_down
+            beq @no_direction
+            lda Velocities::negative, x
+            sta (addr1), y
+            jmp @done
+        @no_direction:
+            lda #$00
+            sta (addr1), y
+        @done:
+            rts
+        .endproc
+
+        .proc update_velocity
+            ldy #$00
+            lda (addr1), y                  ; pointer to current velocity
+            tax
+            sec
+            sbc tmp1                        ; target velocity
+            bne @check_greater
+            jmp @done
+        @check_greater:
+            bmi @lesser
+            dex
+            jmp @done
+        @lesser:
+            inx
+        @done:
+            txa
+            sta (addr1), y
+            rts
+        .endproc
+
+        .proc update_position
+            ldy #$01
+            lda tmp1                ; current_velocity
             bmi @negative
         @positive:
             clc
-            adc player_x + 1
-            sta player_x + 1
+            adc (addr1), y          ; pointer to current position
+            sta (addr1), y
+            dey
             lda #$00
-            adc player_x
-            sta player_x
+            adc (addr1), y
+            sta (addr1), y
             jmp @done
         @negative:
             lda #$00
             sec
-            sbc player_velocity_x
-            sta tmp1
-            lda player_x + 1
-            sec
             sbc tmp1
-            sta player_x + 1
-            lda player_x
+            sta tmp2
+            lda (addr1), y
+            sec
+            sbc tmp2
+            sta (addr1), y
+            dey
+            lda (addr1), y
             sbc #$00
-            sta player_x
+            sta (addr1), y
         @done:
             rts
         .endproc
@@ -182,10 +276,12 @@
             rts
         .endproc
 
-        .proc bound_position_x
-            lda player_x
+        .proc set_screen_position
+            ldy #$00
+            lda (addr1), y          ; pointer to current position
             sta tmp1
-            lda player_x + 1
+            iny
+            lda (addr1), y
             sta tmp2
             asl tmp2
             rol tmp1
@@ -195,8 +291,9 @@
             rol tmp1
             asl tmp2
             rol tmp1
+            dey
             lda tmp1
-            sta player_sprite_x
+            sta (addr2), y          ; pointer to sprite position
         @done:
             rts
         .endproc
@@ -206,7 +303,7 @@
         .proc update
             ; top left tile (x - OFFSET_2x2, y - OFFSET_2x2)
             ldx #$00
-            lda player_y
+            lda player_sprite_y
             sec
             sbc #OFFSET_2x2             ; byte 0: y position
             sta $0204                   ; store player info in the 2nd spot of OAM RAM
@@ -219,7 +316,7 @@
             sbc #OFFSET_2x2
             sta $0207                   ; byte 3: x position
             ; top right tile (x, y - OFFSET_2x2)
-            lda player_y
+            lda player_sprite_y
             sec
             sbc #OFFSET_2x2
             sta $0208
@@ -232,7 +329,7 @@
             sta $020b
             ; bottom left tile (x - 7, y)
             inx
-            lda player_y
+            lda player_sprite_y
             sta $020c
             lda player_sprites,X        ; next tile
             sta $020d
@@ -243,7 +340,7 @@
             sbc #OFFSET_2x2
             sta $020f
             ; bottom right tile (x, y)
-            lda player_y                ; same tile as before
+            lda player_sprite_y                ; same tile as before
             sta $0210
             lda player_sprites,X
             sta $0211
