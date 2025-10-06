@@ -7,52 +7,54 @@ tmpX: .res 1                        ; $0001
 tmpY: .res 1                        ; $0002
 tmp1: .res 1                        ; $0003
 tmp2: .res 1                        ; $0004
-addr1: .res 2                       ; $0005 - $0006
-addr2: .res 2                       ; $0007 - $0008
-seed: .res 2                        ; $0009 - $0010
-player_x: .res 2                    ; $000b - $000c
-player_y: .res 2                    ; $000d - $000e
-target_velocity_x: .res 1           ; $000f
-target_velocity_y: .res 1           ; $0010
-player_velocity_x: .res 1           ; $0011
-player_velocity_y: .res 1           ; $0012
-player_sprite_x: .res 1             ; $0013
-player_sprite_y: .res 1             ; $0014
-player_sprite_attrs: .res 1         ; $0015
-ppu_scroll_y: .res 1                ; $0016
-ppu_scroll_x: .res 1                ; $0017
-current_ppu_ctrl: .res 1            ; $0018
-current_ppu_mask: .res 1            ; $0019
+tmp3: .res 1                        ; $0005
+addr1: .res 2                       ; $0006 - $0007
+addr2: .res 2                       ; $0008 - $0009
+seed: .res 2                        ; $000a - $000b
+player_x: .res 2                    ; $000c - $000d
+player_y: .res 2                    ; $000e - $000f
+target_velocity_x: .res 1           ; $0010
+target_velocity_y: .res 1           ; $0011
+player_velocity_x: .res 1           ; $0012
+player_velocity_y: .res 1           ; $0013
+player_sprite_x: .res 1             ; $0014
+player_sprite_y: .res 1             ; $0015
+player_sprite_attrs: .res 1         ; $0016
+ppu_scroll_y: .res 1                ; $0017
+ppu_scroll_x: .res 1                ; $0018
+current_ppu_ctrl: .res 1            ; $0019
+current_ppu_mask: .res 1            ; $001a
 ; s p - - - - - -
 ; | +------------------------------ 0 normal, 1 paused
 ; +-------------------------------- 0 working, 1 sleeping
-game_state: .res 1                  ; $001a
-joy1_press: .res 1                  ; $001b
-joy2_press: .res 1                  ; $001c
-joy1_down: .res 1                   ; $001d
-joy2_down: .res 1                   ; $001e
+game_state: .res 1                  ; $001b
+joy1_press: .res 1                  ; $001c
+joy2_press: .res 1                  ; $001d
+joy1_down: .res 1                   ; $001e
+joy2_down: .res 1                   ; $001f
 ; enemy object pool
-enemy_x_pos: .res NUM_ENEMIES       ; $001f - $0023
-enemy_y_pos: .res NUM_ENEMIES       ; $0024 - $0028
-enemy_x_vels: .res NUM_ENEMIES      ; $0029 - $002d
-enemy_y_vels: .res NUM_ENEMIES      ; $002f - $0032
-enemy_flags: .res NUM_ENEMIES       ; $0033 - $0037
+enemy_x_pos: .res NUM_ENEMIES       ; $0020 - $0024
+enemy_y_pos: .res NUM_ENEMIES       ; $0025 - $0029
+enemy_x_vels: .res NUM_ENEMIES      ; $002a - $002e
+enemy_y_vels: .res NUM_ENEMIES      ; $002f - $0033
+enemy_flags: .res NUM_ENEMIES       ; $0034 - $0038
 ; a _ _ _ _ t t t
 ; |         +-+-+------------------- enemy type (8 posible enemies)
 ; +---------------------------------  0 inactive, 1 active
-current_enemy: .res 1               ; $0038
-current_enemy_type: .res 1          ; $0039
-enemy_timer: .res 1                 ; $003a
-enemy_sprite_attrs: .res 1          ; $003b
+current_enemy: .res 1               ; $0039
+current_enemy_type: .res 1          ; $003a
+enemy_timer: .res 1                 ; $003b
+enemy_sprite_attrs: .res 1          ; $003c
 ; player bullet pool
-bullet_xs: .res NUM_BULLETS         ; $003c - $003e
-bullet_ys: .res NUM_BULLETS         ; $003f - $0041
+bullet_xs: .res NUM_BULLETS         ; $003d - $003f
+bullet_ys: .res NUM_BULLETS         ; $0040 - $0042
 
 .exportzp tmpA
 .exportzp tmpX
 .exportzp tmpY
 .exportzp tmp1
 .exportzp tmp2
+.exportzp tmp3
 .exportzp addr1
 .exportzp addr2
 .exportzp seed

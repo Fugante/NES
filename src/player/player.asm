@@ -3,6 +3,7 @@
 
 .importzp tmp1
 .importzp tmp2
+.importzp tmp3
 .importzp addr1
 .importzp addr2
 .importzp player_x
@@ -31,27 +32,28 @@
     ; Velocities expressed in fixed point values 4.4
     .scope Velocities
         positive:
-            .byte %00010000, %01000000  ; 1.0 and 4.0 pixels per frame
+            .byte %00001011     ; best approximation to srqt(2)/2 pixels per frame
+            .byte %00010000     ; 1.0 pixels per frame
+            .byte %00010111     ; best approximation to sqrt(2) pixels per frame
+            .byte %01000000     ; 4.0 pixels per frame
         negative:
-            .byte %11110000, %11000000  ; 2's complement of positive velocities
+            ; 2's complement of positive velocities
+            .byte %11110101
+            .byte %11110000
+            .byte %11101001
+            .byte %11000000
     .endscope
 
     .proc init_player
-        jsr init_x
-        jsr init_y
+        jsr init_position
         jsr init_sprites
     .endproc
 
-    .proc init_x
+    .proc init_position
         lda #Initial::player_x0
         sta player_x
         lda #Initial::player_x1
         sta player_x + 1
-    @done:
-        rts
-    .endproc
-
-    .proc init_y
         lda #Initial::player_y0
         sta player_y
         lda #Initial::player_y1
@@ -68,6 +70,7 @@
     .endproc
 
     .scope Movement
+        ; Move player
         .proc update
             jsr set_target_velocities
             jsr accelerate
@@ -77,12 +80,15 @@
             rts
         .endproc
 
+        ; Set target velocities based on player input
         .proc set_target_velocities
         @x_axis:
             lda #BTN_RIGHT
             sta tmp1
             lda #BTN_LEFT
             sta tmp2
+            lda #%00001100                   ;(BTN_DOWN | BTN_UP)
+            sta tmp3
             lda #<target_velocity_x
             sta addr1
             lda #>target_velocity_x
@@ -93,6 +99,8 @@
             sta tmp1
             lda #BTN_UP
             sta tmp2
+            lda #(BTN_RIGHT | BTN_LEFT)
+            sta tmp3
             lda #<target_velocity_y
             sta addr1
             lda #>target_velocity_y
@@ -102,6 +110,7 @@
             rts
         .endproc
 
+        ; Change player's velocities based on current target velocity and acceleration
         .proc accelerate
         @x_axis:
             lda #<player_velocity_x
@@ -123,6 +132,7 @@
             rts
         .endproc
 
+        ; Change player's position based on current velocities
         .proc move
         @x_axis:
             lda player_velocity_x
@@ -144,6 +154,7 @@
             rts
         .endproc
 
+        ; Bind player position on screen
         .proc bound_position
         @x_axis:
             lda #<player_x
@@ -169,19 +180,35 @@
             rts
         .endproc
 
+        ; Set target velocity based on player's input.
+        ; -- Vars. --
+        ;   tmp1:   bitmask for the button that represents positive direction
+        ;           (BTN_RIGHT or BTN_DOWN)
+        ;   tmp2:   bitmask for the button that represents negative direction
+        ;           (BTN_LEFT or BTN_UP)
+        ;   tmp3:   bitmask for the other 2 buttons that represent the other axis
+        ;           (BTN_RIGHT and BTN_LEFT, or BTN_DOWN and BTN_UP)
+        ;   addr1:  pointer to the velocity variable
+        ;           (player_velocity_x or player_velocity_y)
         .proc set_target_velocity
             ldy #$00
             ldx #$00
+            lda tmp3
+            and joy1_down
+            bne @check_button_b             ; if (also moving along the other axis) { x++ }
+            inx
+        @check_button_b:
             lda #BTN_B
             and joy1_down
-            beq @check_positive             ; if (button B is pressed) { x++ }
+            beq @check_positive             ; if (button B is pressed) { x += 2 }
+            inx
             inx
         @check_positive:
             lda tmp1                        ; positive direction button mask
             and joy1_down
             beq @check_negative
             lda Velocities::positive, x
-            sta (addr1), y                  ; pointer to the velocity variable
+            sta (addr1), y                  ; pointer to velocity variable
             jmp @done
         @check_negative:
             lda tmp2                        ; negative direction button mask
@@ -197,6 +224,10 @@
             rts
         .endproc
 
+        ; Update player's velocity.
+        ; -- Vars. --
+        ;   addr1: pointer to player's velocity (player_velocity_x or player_velocity_y)
+        ;   tmp1: target velocity
         .proc update_velocity
             ldy #$00
             lda (addr1), y                  ; pointer to current velocity
@@ -217,6 +248,10 @@
             rts
         .endproc
 
+        ; Update player's coordinates.
+        ; -- Vars. --
+        ;   tmp1: player's velocity
+        ;   addr1: pointer to player's coordinates (player_x, player_y)
         .proc update_position
             ldy #$01
             lda tmp1                ; current_velocity
@@ -276,6 +311,10 @@
             rts
         .endproc
 
+        ; Convert player coordinates to screen coordinates.
+        ; -- Vars. --
+        ;   addr1: pointer to player's coordinate (player_x or player_y)
+        ;   addr2: pointer to sprite's coordinate (sprite_x or sprite_y)
         .proc set_screen_position
             ldy #$00
             lda (addr1), y          ; pointer to current position
@@ -300,6 +339,7 @@
     .endscope
 
     .scope Sprite
+        ; Write in OAM player's sprite data.
         .proc update
             ; top left tile (x - OFFSET_2x2, y - OFFSET_2x2)
             ldx #$00
@@ -331,7 +371,7 @@
             inx
             lda player_sprite_y
             sta $020c
-            lda player_sprites,X        ; next tile
+            lda player_sprites, x       ; next tile
             sta $020d
             lda player_sprite_attrs
             sta $020e
@@ -340,9 +380,9 @@
             sbc #OFFSET_2x2
             sta $020f
             ; bottom right tile (x, y)
-            lda player_sprite_y                ; same tile as before
+            lda player_sprite_y         ; same tile as before
             sta $0210
-            lda player_sprites,X
+            lda player_sprites, x
             sta $0211
             lda player_sprite_attrs
             eor #%01000000              ; flip sprite horizontally
@@ -356,7 +396,6 @@
 
     .proc update_player
         jsr Movement::update
-        nop
         ;jsr Movement::check_limits
         jsr Sprite::update
     @done:
